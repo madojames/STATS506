@@ -1,0 +1,350 @@
+---
+title: "STATS506HW1"
+author: "Haoran"
+format: html
+editor: visual
+---
+
+# HW1
+## github: https://github.com/madojames/STATS506/tree/main
+```{r}
+getwd()
+library(dplyr)
+```
+
+## Q1
+### a
+```{r}
+wine <- read.table("wine/wine.data",sep = ",")
+head(wine)
+```
+
+```{r}
+winename <- c("label","Alcohol", "Malic acid", "Ash", "Alcalinity of ash", "Magnesium", "Total phenols", "Flavanoids", "Nonflavanoid phenols", "Proanthocyanins","Color intensity","Hue","OD280/OD315 of diluted wines","Proline")
+colnames(wine) <- winename
+write.csv(wine,"wine.csv")
+head(wine)
+```
+### b
+```{r}
+table(wine[,1])
+print("Right num is class 1 59 class 2 71 class 3 48.")
+```
+### c
+```{r}
+#Pearson correlation coefficient
+overall_cor <- cor(wine$Alcohol,wine$`Color intensity`)
+print(paste("1. the over all correlation coefficient using pearson is",overall_cor))
+
+
+class1 <- wine[wine$label == 1,]
+class2 <- wine[wine$label == 2,]
+class3 <- wine[wine$label == 3,]
+
+cor1 <- cor(class1$Alcohol,class1$`Color intensity`)
+cor2 <- cor(class2$Alcohol,class2$`Color intensity`)
+cor3 <- cor(class3$Alcohol,class3$`Color intensity`)
+
+print(paste("2. class ",which.max(c(cor1,cor2,cor3))," has the highest correlation with ",max(cor1,cor2,cor3)))
+print(paste("class ",which.min(c(cor1,cor2,cor3))," has the highest correlation with ",min(cor1,cor2,cor3)))
+
+
+maxcolor <- max(wine$`Color intensity`)
+alcoofmaxcolor <- wine[wine$`Color intensity` == maxcolor,2]
+print(paste("3. the alcohol content of the wine with the highest color intensity is", alcoofmaxcolor))
+
+
+proanthocyanins_higher <- wine[wine$Proanthocyanins > wine$Ash,]
+num_higher <- nrow(proanthocyanins_higher)
+precent <- num_higher/nrow(wine)
+print(paste("4. the percentage of wines had a higher content of proanthocyanins compare to ash is:",precent))
+```
+### d
+```{r}
+means_all <- colMeans(wine[,2:14])
+means_1 <- colMeans(class1[,2:14])
+means_2 <- colMeans(class2[,2:14])
+means_3 <- colMeans(class3[,2:14])
+
+
+M <- matrix(c(means_1,means_2,means_3,means_all),byrow = TRUE,nrow = 4)
+colnames(M) <- winename[2:14]
+rownames(M) <- c( "Class 1", "Class 2", "Class 3","Overall")
+print(M)
+```
+### e
+#### first we see our version of t test
+```{r}
+#' Function to calculation of the t-test statistics
+#' 
+#' @param x a numeric vector
+#' @param y a numeric vector
+#' @reture the t test statistics array as in (t_stat, df, p_value)
+#' t_stat for t statistics, df for degree of freedom, p_value for p value of the t test
+manual_t_test <- function(x, y) {
+  n1 <- length(x)
+  n2 <- length(y)
+  mean_x <- mean(x)
+  mean_y <- mean(y)
+  var_x <- var(x)
+  var_y <- var(y)
+  
+  t_stat <- (mean_x - mean_y) / sqrt((var_x/n1) + (var_y/n2))
+  
+  df <- ((var_x/n1) + (var_y/n2))^2 / (((var_x/n1)^2 / (n1 - 1)) + ((var_y/n2)^2 / (n2 - 1)))
+  
+  p_value <- 2 * pt(-abs(t_stat), df)
+  
+  return(c(t_stat,df,p_value))
+}
+```
+
+```{r}
+result <- manual_t_test(wine$`Total phenols`[wine$label == 1], wine$`Total phenols`[wine$label == 2])
+print(result)
+t.test(wine$`Total phenols`[wine$label == 1], wine$`Total phenols`[wine$label == 2])
+print("they are the same in T statistic, df and p value to the offical function")
+```
+
+#### compare it to official ones
+```{r}
+result2 <- manual_t_test(wine$`Total phenols`[wine$label == 1], wine$`Total phenols`[wine$label == 3])
+print(result2)
+t.test(wine$`Total phenols`[wine$label == 1], wine$`Total phenols`[wine$label == 3])
+result3 <- manual_t_test(wine$`Total phenols`[wine$label == 3], wine$`Total phenols`[wine$label == 2])
+print(result3)
+t.test(wine$`Total phenols`[wine$label == 3], wine$`Total phenols`[wine$label == 2])
+```
+
+## Q2
+### a
+```{r}
+Manager <- read.csv("AskAManager.csv",row.names = 1)
+Manager_names <- colnames(Manager)
+print(Manager_names)
+head(Manager)
+```
+### b
+```{r}
+colnames(Manager) <- c("Timestamp", "Age", "Industry_area", "title", "title_additional", "Annual_salary", "Additional_monetary_compensation", "currency", "other_currency", "Income_Additional_context", "state_of_work", "country_of_work", "city_of_work", "years_of_work_overall", "years_of_work_in_field", "Education", "Gender", "Race")
+head(Manager)
+```
+### c
+```{r}
+num_before <- nrow(Manager)
+Manager_USD <- Manager[Manager$currency == "USD",]
+num_after <- nrow(Manager_USD)
+print(paste("num before subseting is:",num_before,"and num after subseting:",num_after))
+```
+### d
+```{r}
+df <- as.data.frame(Manager_USD)
+
+df$Age <- as.factor(df$Age)
+df$years_of_work_overall <- as.factor(df$years_of_work_overall)
+df$years_of_work_in_field <- as.factor(df$years_of_work_in_field)
+
+#head(df)
+
+Age_levels <- levels(df$Age)
+years_of_work_overall_levels <- levels(df$years_of_work_overall)
+years_of_work_in_field_levels <- levels(df$years_of_work_in_field)
+print(Age_levels)
+print(years_of_work_overall_levels)
+print(years_of_work_in_field_levels)
+```
+```{r}
+df$Age <- recode(df$Age,
+                 'under 18' = '17',
+                 '18-24' = '21',
+                 '25-34' = '29',
+                 '35-44' = '39',
+                 '45-54' = '49',
+                 '55-64' = '59',
+                 '65 or over' = '65')
+
+df$years_of_work_overall <- recode(df$years_of_work_overall,
+                                   "1 year or less" = "1",
+                                   "2 - 4 years" = "3",
+                                   "5-7 years" = "6",
+                                   "8 - 10 years" = "9",
+                                   "11 - 20 years" = "15",
+                                   "21 - 30 years" = "25",
+                                   "31 - 40 years" = "35",
+                                   "41 years or more" = "45")
+
+df$years_of_work_in_field <- recode(df$years_of_work_in_field,
+                                   "1 year or less" = "1",
+                                   "2 - 4 years" = "3",
+                                   "5-7 years" = "6",
+                                   "8 - 10 years" = "9",
+                                   "11 - 20 years" = "15",
+                                   "21 - 30 years" = "25",
+                                   "31 - 40 years" = "35",
+                                   "41 years or more" = "45")
+```
+
+
+```{r}
+df$Age <- as.numeric(as.character(df$Age))
+df$years_of_work_overall <- as.numeric(as.character(df$years_of_work_overall))
+df$years_of_work_in_field <- as.numeric(as.character(df$years_of_work_in_field))
+
+head(df)
+
+df_age <- df[df$Age >= 18
+                       & df$years_of_work_overall >= df$years_of_work_in_field
+                       & df$years_of_work_overall <= (df$Age - 18),]
+
+num_before <- nrow(Manager_USD)
+num_after <- nrow(df_age)
+print(paste("num before subseting is:",num_before,"and num after subseting:",num_after))
+```
+### e
+```{r}
+# from https://www.indeed.com/career/manager/salaries it show that the range is 40,026-142,410
+# so we do it by 40,000-142,500
+
+salary <- df_age$Annual_salary + replace(df_age$Additional_monetary_compensation, is.na(df_age$Additional_monetary_compensation), 0)
+
+df_salary <- df_age[salary > 40000 & salary < 142500,]
+
+
+num_before <- nrow(df_age)
+num_after <- nrow(df_salary)
+print(paste("num before subseting is:",num_before,"and num after subseting:",num_after))
+
+```
+
+### f
+SKIP
+
+
+## Q3
+### a
+```{r}
+#' Function to checks if a given positive integer is a palindrome
+#' 
+#' @param num a positive integer
+#' @reture isPalindromic: A logical value indicating if the input is palindromic.
+#' @reture reversed: The input with its digits reversed.
+isPalindromic <- function(num) {
+
+  if (!is.numeric(num) || num != as.integer(num)) {
+    stop("Input must be a integer.")
+  }
+  
+  if (num <= 0) {
+    stop("Input must be positive.")
+  }
+  
+  
+  num_str <- as.character(num)
+  
+  #here we deal with 0 with collapse
+  reversed_str <- paste0(rev(strsplit(num_str, NULL)[[1]]), collapse = "")  
+  reversed_num <- as.numeric(reversed_str)
+  
+  is_palindromic <- num == reversed_num
+  
+  return(list(
+        isPalindromic = is_palindromic,
+        reversed = reversed_num
+    ))
+}
+```
+
+
+```{r}
+isPalindromic(728827)
+isPalindromic(39951)
+```
+
+### b
+```{r}
+#' Function to finds the next palindromic number strictly greater than the input
+#' 
+#' @param num a positive integer
+#' @reture the next palindromic number greater than num
+nextPalindrome <- function(num) {
+
+  if (!is.numeric(num) || num != as.integer(num)) {
+    stop("Input must be a integer.")
+  }
+  
+  if (num <= 0) {
+    stop("Input must be positive.")
+  }
+  
+  while (!(isPalindromic(num)[[1]])) {
+    num <- num + 1
+  }
+  
+  return(num)
+}
+```
+
+```{r}
+nextPalindrome(7152)
+nextPalindrome(765431537)
+```
+
+### c
+```{r}
+nextPalindrome(391)
+nextPalindrome(9928)
+nextPalindrome(19272719)
+nextPalindrome(109)
+nextPalindrome(2)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
