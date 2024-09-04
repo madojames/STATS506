@@ -1,12 +1,15 @@
 ---
 title: "STATS506HW1"
 author: "Haoran"
-format: html
+format: 
+  html:
+    code-fold: true
 editor: visual
 ---
 
 # HW1
 ## github: https://github.com/madojames/STATS506/tree/main
+Disclosesure: Chatgpt is used for better understanding or searching for useful functions.
 ```{r}
 getwd()
 library(dplyr)
